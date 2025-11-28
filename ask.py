@@ -198,7 +198,9 @@ def run_server():
     app.config['index'] = index
     app.config['chunks'] = chunks
     print('Serving chatbot on http://127.0.0.1:7860')
-    app.run(host='127.0.0.1', port=7860)
+    port = int(os.getenv('PORT', '7860'))
+    print('Serving chatbot on http://0.0.0.0:%s' % port)
+    app.run(host='0.0.0.0', port=port)
 
 
 def main():
@@ -218,8 +220,9 @@ def main():
         app.config['client'] = client
         app.config['index'] = index
         app.config['chunks'] = chunks
-        print('Serving chatbot on http://127.0.0.1:7860')
-        app.run(host='127.0.0.1', port=7860)
+        port = int(os.getenv('PORT', '7860'))
+        print('Serving chatbot on http://0.0.0.0:%s' % port)
+        app.run(host='0.0.0.0', port=port)
 
 
 if __name__ == '__main__':
