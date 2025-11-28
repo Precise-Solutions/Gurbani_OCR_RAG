@@ -130,11 +130,13 @@ def homepage():
         question = request.form.get('question', '').strip()
         answer, retrieved = ask_question(question, app.config['client'], app.config['index'], app.config['chunks'])
         if retrieved:
-            chunk_lines = [
-                f"<strong>Chunk {c['id']}:</strong> {c['text'][ : 300]}..."
-                for c in retrieved
-            ]
-            chunks_html = '<br>'.join(chunk_lines)
+            chunk_lines = []
+            for c in retrieved:
+                snippet = c['text'][:320].strip()
+                chunk_lines.append(
+                    f"<div class='chunk'><strong>Chunk {c['id']}</strong>{snippet}...</div>"
+                )
+            chunks_html = ''.join(chunk_lines)
     return render_template_string(
         '''
         <!doctype html>
@@ -143,34 +145,155 @@ def homepage():
             <meta charset="utf-8">
             <title>Gurbani RAG Chatbot</title>
             <style>
-                body { font-family: system-ui, sans-serif; margin: 2rem; background:#111; color:#f5f5f5; }
-                textarea, input { width: 100%; font-size: 1rem; padding: 0.5rem; }
-                button { font-size: 1rem; padding: 0.75rem 1.25rem; margin-top:0.5rem; }
-                .card { background:#1b1b1b; border:1px solid #333; padding:1rem; margin-top:1rem; border-radius:0.75rem; }
-                .chunks { max-height:200px; overflow:auto; border:1px dashed #555; padding:0.5rem; }
+                :root {
+                    color-scheme: dark;
+                }
+                * { box-sizing: border-box; }
+                body {
+                    background: linear-gradient(180deg, #050505, #1d1d1f);
+                    font-family: 'Inter', system-ui, sans-serif;
+                    color: #f8fafc;
+                    margin: 0;
+                    min-height: 100vh;
+                }
+                .page {
+                    padding: 2rem;
+                    max-width: 1100px;
+                    margin: 0 auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1.75rem;
+                }
+                .hero {
+                    margin-bottom: 1.5rem;
+                }
+                h1 {
+                    font-size: 2.25rem;
+                    margin-bottom: 0.25rem;
+                }
+                .subtitle {
+                    color: #cbd5f5;
+                    margin-top: 0;
+                }
+                form {
+                    margin-bottom: 1rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.85rem;
+                }
+                textarea {
+                    width: 100%;
+                    min-height: 120px;
+                    border-radius: 0.75rem;
+                    border: 1px solid #2d3748;
+                    background: #0f172a;
+                    color: #f1f5f9;
+                    padding: 0.9rem;
+                    font-size: 1rem;
+                    resize: vertical;
+                    font-family: inherit;
+                }
+                button {
+                    background: #2563eb;
+                    border: none;
+                    color: white;
+                    padding: 0.85rem 1.75rem;
+                    border-radius: 0.75rem;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    align-self: flex-start;
+                }
+                button:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+                }
+                .grid {
+                    display: grid;
+                    gap: 1.75rem;
+                    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                }
+                .card {
+                    background: rgba(15, 23, 42, 0.9);
+                    border: 1px solid rgba(148, 163, 184, 0.3);
+                    border-radius: 1rem;
+                    padding: 1.25rem;
+                    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.65);
+                }
+                .card h2, .card h3 {
+                    margin-top: 0;
+                    margin-bottom: 0.75rem;
+                }
+                .answer {
+                    line-height: 1.6;
+                    max-height: 380px;
+                    overflow: auto;
+                }
+                .chunks {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                    max-height: 340px;
+                    overflow: auto;
+                    padding-right: 0.25rem;
+                }
+                .chunk {
+                    border-radius: 0.75rem;
+                    padding: 0.85rem;
+                    border: 1px dashed rgba(148, 163, 184, 0.5);
+                    background: rgba(255, 255, 255, 0.02);
+                    font-size: 0.95rem;
+                    line-height: 1.4;
+                }
+                .chunk strong {
+                    font-size: 0.95rem;
+                    display: block;
+                    margin-bottom: 0.35rem;
+                }
+                .info {
+                    font-size: 0.9rem;
+                    color: #94a3b8;
+                    margin-bottom: 1rem;
+                }
+                @media (max-width: 640px) {
+                    .page {
+                        padding: 1.25rem;
+                    }
+                    textarea {
+                        min-height: 100px;
+                    }
+                }
             </style>
         </head>
         <body>
-            <h1>Punjabi RAG Chatbot</h1>
-            <form method="post">
-                <label for="question">Ask your question (English or Punjabi):</label>
-                <textarea id="question" name="question" rows="3">{{ question }}</textarea>
-                <button type="submit">Ask</button>
-            </form>
-            {% if answer %}
-            <div class="card">
-                <h2>Answer</h2>
-                <p>{{ answer }}</p>
-            </div>
-            {% endif %}
-            {% if chunks %}
-            <div class="card">
-                <h3>Top-k chunks</h3>
-                <div class="chunks">
-                    {{ chunks|safe }}
+            <div class="page">
+                <div class="hero">
+                <h1>Gurbani RAG AI Chatbot</h1>
+                <p class="subtitle">Ask questions in English or Punjabi. Answers are grounded in the uploaded OCR text.</p>
+                </div>
+                <form method="post">
+                    <label for="question">Ask your question:</label>
+                    <textarea id="question" name="question" rows="4" placeholder="Type something like: 'Who does the story mention?'">{{ question }}</textarea>
+                    <button type="submit">Get Answer</button>
+                    <p class="info">Responses cite top chunks retrieved from the OCR text.</p>
+                </form>
+                <div class="grid">
+                    {% if answer %}
+                    <div class="card">
+                        <h2>Answer</h2>
+                        <div class="answer">{{ answer }}</div>
+                    </div>
+                    {% endif %}
+                    {% if chunks %}
+                    <div class="card">
+                        <h3>Top-k Chunks</h3>
+                        <div class="chunks">
+                            {{ chunks|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-            {% endif %}
         </body>
         </html>
         ''',
