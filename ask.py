@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import subprocess
 from pathlib import Path
 from typing import List, Tuple
 
@@ -36,6 +37,15 @@ def load_index(path: Path) -> faiss.Index:
     if not path.exists():
         raise SystemExit(f'{path} not found, please run build_index.py first.')
     return faiss.read_index(str(path))
+
+
+def ensure_index_assets() -> None:
+    index_path = Path('index.faiss')
+    chunks_path = Path('chunks.json')
+    if index_path.exists() and chunks_path.exists():
+        return
+    print('Index or chunk list missing; running build_index.py before start.')
+    subprocess.run(['python3', 'build_index.py'], check=True)
 
 
 def embed_query(client: OpenAI, question: str) -> np.ndarray:
@@ -171,10 +181,11 @@ def homepage():
 
 
 def load_resources() -> Tuple[OpenAI, faiss.Index, List[dict]]:
-    api_key = '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'
+    api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
         raise SystemExit('OPENAI_API_KEY is required in .env')
 
+    ensure_index_assets()
     client = OpenAI(api_key=api_key)
     chunks = load_chunks(Path('chunks.json'))
     index = load_index(Path('index.faiss'))

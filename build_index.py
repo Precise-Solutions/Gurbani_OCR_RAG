@@ -64,7 +64,7 @@ def embed_texts(client: OpenAI, texts: List[str], model: str) -> np.ndarray:
 
 
 def main() -> None:
-    api_key = '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'
+    api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
         raise SystemExit('OPENAI_API_KEY is required in .env')
 

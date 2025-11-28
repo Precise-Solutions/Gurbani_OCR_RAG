@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gurbani-ocr-rag
+    env: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: pip install faiss-cpu numpy openai python-dotenv flask
+    startCommand: python3 ask.py
+    autoDeploy: true
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
