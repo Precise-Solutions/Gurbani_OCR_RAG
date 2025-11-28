@@ -1,0 +1,5 @@
+.DS_Store
+.env
+venv/
+index.faiss
+output.txt
