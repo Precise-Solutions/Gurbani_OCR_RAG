@@ -12,26 +12,18 @@ load_dotenv()
 
 
 def load_source_text() -> str:
-    cleaned_path = Path('gurbani_cleaned.txt')
-    original_path = Path('gurbani.txt')
+    candidate_names = ['gurbani.txt', 'Gurbani.txt']
 
-    if not original_path.exists():
-        raise SystemExit(f'{original_path} is missing; please add your OCR output there.')
+    for name in candidate_names:
+        candidate = Path(name)
+        if candidate.exists():
+            content = candidate.read_text(encoding='utf-8').strip()
+            if content:
+                return content
 
-    original = original_path.read_text(encoding='utf-8').strip()
-    if cleaned_path.exists():
-        cleaned = cleaned_path.read_text(encoding='utf-8').strip()
-        data = original.split()
-        cleaned_data = cleaned.split()
-        if data:
-            ratio = len(cleaned_data) / len(data)
-            if ratio >= 0.9:
-                return cleaned
-        print(
-            'Cleaned file is shorter than the original OCR output; '
-            'using gurbani.txt so no text is lost.'
-        )
-    return original
+    raise SystemExit(
+        'No OCR source found. Add gurbani.txt (or Gurbani.txt) before running this script.'
+    )
 
 
 def chunk_text(text: str, chunk_size: int = 150, overlap: int = 50) -> List[str]:
